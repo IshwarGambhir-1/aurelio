@@ -1,0 +1,26 @@
+package com.yash.luxevite.categoryservice.config;
+
+
+import java.util.Optional;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.domain.AuditorAware;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+
+/**
+ * Database configuration class
+ * Enables JPA auditing and additional database configurations
+ */
+@Configuration
+@EnableJpaAuditing
+public class DatabaseConfig {
+
+    /**
+     * Auditor aware bean for tracking entity modifications
+     */
+    @Bean
+    public AuditorAware<String> auditorAware() {
+        return () -> Optional.of("aurelio-system");
+    }
+}

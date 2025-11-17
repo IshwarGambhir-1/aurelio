@@ -1,0 +1,81 @@
+package com.yash.category_service.dto;
+
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.yash.luxevite.categoryservice.model.Category;
+import com.yash.luxevite.categoryservice.model.CategoryGender;
+import com.yash.luxevite.categoryservice.model.CategoryStatus;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * DTO for category responses
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class CategoryResponse {
+
+    private Long id;
+    private String name;
+    private String description;
+    private String imageUrl;
+    private String bannerImageUrl;
+    private CategoryGender gender;
+    private CategoryStatus status;
+    private Long parentCategoryId;
+    private String parentCategoryName;
+    private Integer displayOrder;
+    private Boolean isFeatured;
+    private String metaTitle;
+    private String metaDescription;
+    private String metaKeywords;
+    private String slug;
+    private String fullPath;
+    private Boolean hasSubCategories;
+    private List<CategoryResponse> subCategories = new ArrayList<>();
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
+    // Static method to convert from Entity to DTO
+    public static CategoryResponse fromEntity(Category category) {
+        CategoryResponse response = new CategoryResponse();
+        response.setId(category.getId());
+        response.setName(category.getName());
+        response.setDescription(category.getDescription());
+        response.setImageUrl(category.getImageUrl());
+        response.setBannerImageUrl(category.getBannerImageUrl());
+        response.setGender(category.getGender());
+        response.setStatus(category.getStatus());
+        response.setDisplayOrder(category.getDisplayOrder());
+        response.setIsFeatured(category.getIsFeatured());
+        response.setMetaTitle(category.getMetaTitle());
+        response.setMetaDescription(category.getMetaDescription());
+        response.setMetaKeywords(category.getMetaKeywords());
+        response.setSlug(category.getSlug());
+        response.setFullPath(category.getFullPath());
+        response.setHasSubCategories(category.hasSubCategories());
+        response.setCreatedAt(category.getCreatedAt());
+        response.setUpdatedAt(category.getUpdatedAt());
+
+        // Set parent category info
+        if (category.getParentCategory() != null) {
+            response.setParentCategoryId(category.getParentCategory().getId());
+            response.setParentCategoryName(category.getParentCategory().getName());
+        }
+
+        // Convert subcategories recursively
+        if (category.hasSubCategories()) {
+            response.setSubCategories(category.getSubCategories().stream()
+                    .map(CategoryResponse::fromEntity)
+                    .toList());
+        }
+
+        return response;
+    }
+}

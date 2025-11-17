@@ -1,0 +1,52 @@
+package com.yash.category_service.service;
+
+
+import java.util.List;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import com.yash.category_service.dto.CategoryRequest;
+import com.yash.category_service.dto.CategoryResponse;
+import com.yash.category_service.dto.CategoryTreeResponse;
+import com.yash.category_service.model.CategoryGender;
+import com.yash.category_service.model.CategoryStatus;
+
+/**
+ * Service interface for category management operations
+ */
+public interface CategoryService {
+
+    // Basic CRUD operations
+    CategoryResponse createCategory(CategoryRequest categoryRequest);
+    CategoryResponse getCategoryById(Long id);
+    CategoryResponse getCategoryBySlug(String slug);
+    Page<CategoryResponse> getAllCategories(Pageable pageable);
+    CategoryResponse updateCategory(Long id, CategoryRequest categoryRequest);
+    void deleteCategory(Long id);
+
+    // Business operations
+    CategoryResponse updateCategoryStatus(Long id, CategoryStatus status);
+    CategoryResponse addSubCategory(Long parentId, CategoryRequest subCategoryRequest);
+    CategoryResponse updateCategoryOrder(Long id, Integer displayOrder);
+
+    // Filtering and query operations
+    List<CategoryResponse> getCategoriesByGender(CategoryGender gender);
+    List<CategoryResponse> getCategoriesByGenderAndStatus(CategoryGender gender, CategoryStatus status);
+    List<CategoryResponse> getFeaturedCategories();
+    List<CategoryResponse> getFeaturedCategoriesByGender(CategoryGender gender);
+    List<CategoryResponse> getRootCategories();
+    List<CategoryResponse> getRootCategoriesByGender(CategoryGender gender);
+    List<CategoryResponse> getSubCategories(Long parentId);
+    List<CategoryTreeResponse> getCategoryTree();
+    List<CategoryTreeResponse> getCategoryTreeByGender(CategoryGender gender);
+
+    // Search operations
+    Page<CategoryResponse> searchCategories(String query, Pageable pageable);
+
+    // Utility operations
+    boolean existsByNameAndGender(String name, CategoryGender gender);
+    boolean existsBySlug(String slug);
+    List<CategoryResponse> getCategoriesWithProductCount();
+    List<CategoryResponse> getCategoriesByGenderWithProductCount(CategoryGender gender);
+}

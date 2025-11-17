@@ -1,0 +1,22 @@
+package com.yash.category_service.model;
+
+
+/**
+ * Enum for category gender classification
+ */
+public enum CategoryGender {
+    MEN("Men's Fashion"),
+    WOMEN("Women's Fashion"), 
+    CHILDREN("Children's Fashion"),
+    UNISEX("Unisex Fashion");
+
+    private final String displayName;
+
+    CategoryGender(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+}

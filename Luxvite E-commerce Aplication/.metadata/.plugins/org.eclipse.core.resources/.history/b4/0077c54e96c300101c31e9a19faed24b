@@ -1,0 +1,49 @@
+package com.yash.category_service.dto;
+
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.yash.luxevite.categoryservice.model.Category;
+import com.yash.luxevite.categoryservice.model.CategoryGender;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * DTO for hierarchical category tree structure
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class CategoryTreeResponse {
+
+    private Long id;
+    private String name;
+    private String description;
+    private String imageUrl;
+    private CategoryGender gender;
+    private String slug;
+    private Boolean hasSubCategories;
+    private List<CategoryTreeResponse> subCategories = new ArrayList<>();
+
+    public static CategoryTreeResponse fromEntity(Category category) {
+        CategoryTreeResponse response = new CategoryTreeResponse();
+        response.setId(category.getId());
+        response.setName(category.getName());
+        response.setDescription(category.getDescription());
+        response.setImageUrl(category.getImageUrl());
+        response.setGender(category.getGender());
+        response.setSlug(category.getSlug());
+        response.setHasSubCategories(category.hasSubCategories());
+
+        if (category.hasSubCategories()) {
+            response.setSubCategories(category.getSubCategories().stream()
+                    .map(CategoryTreeResponse::fromEntity)
+                    .toList());
+        }
+
+        return response;
+    }
+}

@@ -1,0 +1,9 @@
+package com.yash.category_service.model;
+
+
+/**
+ * Enum for category status
+ */
+public enum CategoryStatus {
+    ACTIVE, INACTIVE, ARCHIVED
+}

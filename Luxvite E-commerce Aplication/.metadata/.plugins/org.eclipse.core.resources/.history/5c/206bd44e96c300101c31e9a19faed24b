@@ -1,0 +1,15 @@
+package com.yash.category_service.exception;
+
+
+/**
+ * Custom exception for category service related errors
+ */
+public class CategoryServiceException extends RuntimeException {
+    public CategoryServiceException(String message) {
+        super(message);
+    }
+    
+    public CategoryServiceException(String message, Throwable cause) {
+        super(message, cause);
+    }
+}

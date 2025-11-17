@@ -1,0 +1,449 @@
+package com.yash.category_service.controller;
+
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.yash.luxevite.categoryservice.dto.ApiResponse;
+import com.yash.luxevite.categoryservice.dto.CategoryRequest;
+import com.yash.luxevite.categoryservice.dto.CategoryResponse;
+import com.yash.luxevite.categoryservice.dto.CategoryTreeResponse;
+import com.yash.luxevite.categoryservice.model.CategoryGender;
+import com.yash.luxevite.categoryservice.model.CategoryStatus;
+import com.yash.luxevite.categoryservice.service.CategoryService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * REST Controller for category operations
+ * Provides endpoints for category management and retrieval
+ */
+@RestController
+@RequestMapping("/api/categories")
+@Slf4j
+@Tag(name = "Category Management", description = "APIs for managing Aurelio product categories")
+public class CategoryController {
+
+    private final CategoryService categoryService;
+
+    @Autowired
+    public CategoryController(CategoryService categoryService) {
+        this.categoryService = categoryService;
+    }
+
+    @PostMapping
+    @Operation(summary = "Create a new category")
+    public ResponseEntity<ApiResponse<CategoryResponse>> createCategory(
+            @Valid @RequestBody CategoryRequest categoryRequest) {
+        
+        log.info("Received request to create category: {}", categoryRequest.getName());
+        
+        CategoryResponse categoryResponse = categoryService.createCategory(categoryRequest);
+        ApiResponse<CategoryResponse> response = ApiResponse.created(
+            categoryResponse, 
+            "Category created successfully",
+            "/api/categories"
+        );
+        
+        log.info("Category created successfully with ID: {}", categoryResponse.getId());
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Get category by ID")
+    public ResponseEntity<ApiResponse<CategoryResponse>> getCategoryById(@PathVariable Long id) {
+        log.debug("Received request to get category by ID: {}", id);
+        
+        CategoryResponse categoryResponse = categoryService.getCategoryById(id);
+        ApiResponse<CategoryResponse> response = ApiResponse.success(
+            categoryResponse,
+            "/api/categories/" + id
+        );
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/slug/{slug}")
+    @Operation(summary = "Get category by slug")
+    public ResponseEntity<ApiResponse<CategoryResponse>> getCategoryBySlug(@PathVariable String slug) {
+        log.debug("Received request to get category by slug: {}", slug);
+        
+        CategoryResponse categoryResponse = categoryService.getCategoryBySlug(slug);
+        ApiResponse<CategoryResponse> response = ApiResponse.success(
+            categoryResponse,
+            "/api/categories/slug/" + slug
+        );
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping
+    @Operation(summary = "Get all categories with pagination")
+    public ResponseEntity<ApiResponse<Page<CategoryResponse>>> getAllCategories(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "displayOrder") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction) {
+        
+        log.debug("Received request to get all categories - page: {}, size: {}", page, size);
+        
+        Sort sort = direction.equalsIgnoreCase("desc") ? 
+            Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        
+        Page<CategoryResponse> categories = categoryService.getAllCategories(pageable);
+        ApiResponse<Page<CategoryResponse>> response = ApiResponse.success(
+            categories,
+            "/api/categories"
+        );
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Update category by ID")
+    public ResponseEntity<ApiResponse<CategoryResponse>> updateCategory(
+            @PathVariable Long id,
+            @Valid @RequestBody CategoryRequest categoryRequest) {
+        
+        log.info("Received request to update category with ID: {}", id);
+        
+        CategoryResponse categoryResponse = categoryService.updateCategory(id, categoryRequest);
+        ApiResponse<CategoryResponse> response = ApiResponse.success(
+            categoryResponse,
+            "Category updated successfully",
+            "/api/categories/" + id
+        );
+        
+        log.info("Category updated successfully with ID: {}", id);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Delete category by ID")
+    public ResponseEntity<ApiResponse<Void>> deleteCategory(@PathVariable Long id) {
+        log.info("Received request to delete category with ID: {}", id);
+        
+        categoryService.deleteCategory(id);
+        ApiResponse<Void> response = ApiResponse.success(
+            null,
+            "Category deleted successfully",
+            "/api/categories/" + id
+        );
+        
+        log.info("Category deleted successfully with ID: {}", id);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{id}/status")
+    @Operation(summary = "Update category status")
+    public ResponseEntity<ApiResponse<CategoryResponse>> updateCategoryStatus(
+            @PathVariable Long id,
+            @RequestParam CategoryStatus status) {
+        
+        log.info("Received request to update status for category ID: {} to: {}", id, status);
+        
+        CategoryResponse categoryResponse = categoryService.updateCategoryStatus(id, status);
+        ApiResponse<CategoryResponse> response = ApiResponse.success(
+            categoryResponse,
+            "Status updated successfully",
+            "/api/categories/" + id + "/status"
+        );
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{parentId}/subcategories")
+    @Operation(summary = "Add subcategory to a parent category")
+    public ResponseEntity<ApiResponse<CategoryResponse>> addSubCategory(
+            @PathVariable Long parentId,
+            @Valid @RequestBody CategoryRequest subCategoryRequest) {
+        
+        log.info("Received request to add subcategory to parent ID: {}", parentId);
+        
+        CategoryResponse categoryResponse = categoryService.addSubCategory(parentId, subCategoryRequest);
+        ApiResponse<CategoryResponse> response = ApiResponse.created(
+            categoryResponse,
+            "Subcategory added successfully",
+            "/api/categories/" + parentId + "/subcategories"
+        );
+        
+        log.info("Subcategory added successfully with ID: {}", categoryResponse.getId());
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @PatchMapping("/{id}/order")
+    @Operation(summary = "Update category display order")
+    public ResponseEntity<ApiResponse<CategoryResponse>> updateCategoryOrder(
+            @PathVariable Long id,
+            @RequestParam Integer displayOrder) {
+        
+        log.info("Received request to update display order for category ID: {} to: {}", id, displayOrder);
+        
+        CategoryResponse categoryResponse = categoryService.updateCategoryOrder(id, displayOrder);
+        ApiResponse<CategoryResponse> response = ApiResponse.success(
+            categoryResponse,
+            "Display order updated successfully",
+            "/api/categories/" + id + "/order"
+        );
+        
+        return ResponseEntity.ok(response);
+    }
+
+    // Filtering and query endpoints
+
+    @GetMapping("/gender/{gender}")
+    @Operation(summary = "Get categories by gender")
+    public ResponseEntity<ApiResponse<List<CategoryResponse>>> getCategoriesByGender(
+            @PathVariable CategoryGender gender) {
+        
+        log.debug("Received request to get categories by gender: {}", gender);
+        
+        List<CategoryResponse> categories = categoryService.getCategoriesByGender(gender);
+        ApiResponse<List<CategoryResponse>> response = ApiResponse.success(
+            categories,
+            "/api/categories/gender/" + gender
+        );
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/gender/{gender}/status/{status}")
+    @Operation(summary = "Get categories by gender and status")
+    public ResponseEntity<ApiResponse<List<CategoryResponse>>> getCategoriesByGenderAndStatus(
+            @PathVariable CategoryGender gender,
+            @PathVariable CategoryStatus status) {
+        
+        log.debug("Received request to get categories by gender: {} and status: {}", gender, status);
+        
+        List<CategoryResponse> categories = categoryService.getCategoriesByGenderAndStatus(gender, status);
+        ApiResponse<List<CategoryResponse>> response = ApiResponse.success(
+            categories,
+            String.format("/api/categories/gender/%s/status/%s", gender, status)
+        );
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/featured")
+    @Operation(summary = "Get featured categories")
+    public ResponseEntity<ApiResponse<List<CategoryResponse>>> getFeaturedCategories() {
+        log.debug("Received request to get featured categories");
+        
+        List<CategoryResponse> categories = categoryService.getFeaturedCategories();
+        ApiResponse<List<CategoryResponse>> response = ApiResponse.success(
+            categories,
+            "/api/categories/featured"
+        );
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/featured/gender/{gender}")
+    @Operation(summary = "Get featured categories by gender")
+    public ResponseEntity<ApiResponse<List<CategoryResponse>>> getFeaturedCategoriesByGender(
+            @PathVariable CategoryGender gender) {
+        
+        log.debug("Received request to get featured categories by gender: {}", gender);
+        
+        List<CategoryResponse> categories = categoryService.getFeaturedCategoriesByGender(gender);
+        ApiResponse<List<CategoryResponse>> response = ApiResponse.success(
+            categories,
+            "/api/categories/featured/gender/" + gender
+        );
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/roots")
+    @Operation(summary = "Get root categories (no parent)")
+    public ResponseEntity<ApiResponse<List<CategoryResponse>>> getRootCategories() {
+        log.debug("Received request to get root categories");
+        
+        List<CategoryResponse> categories = categoryService.getRootCategories();
+        ApiResponse<List<CategoryResponse>> response = ApiResponse.success(
+            categories,
+            "/api/categories/roots"
+        );
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/roots/gender/{gender}")
+    @Operation(summary = "Get root categories by gender")
+    public ResponseEntity<ApiResponse<List<CategoryResponse>>> getRootCategoriesByGender(
+            @PathVariable CategoryGender gender) {
+        
+        log.debug("Received request to get root categories by gender: {}", gender);
+        
+        List<CategoryResponse> categories = categoryService.getRootCategoriesByGender(gender);
+        ApiResponse<List<CategoryResponse>> response = ApiResponse.success(
+            categories,
+            "/api/categories/roots/gender/" + gender
+        );
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{parentId}/subcategories")
+    @Operation(summary = "Get subcategories by parent category ID")
+    public ResponseEntity<ApiResponse<List<CategoryResponse>>> getSubCategories(
+            @PathVariable Long parentId) {
+        
+        log.debug("Received request to get subcategories for parent ID: {}", parentId);
+        
+        List<CategoryResponse> categories = categoryService.getSubCategories(parentId);
+        ApiResponse<List<CategoryResponse>> response = ApiResponse.success(
+            categories,
+            "/api/categories/" + parentId + "/subcategories"
+        );
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/tree")
+    @Operation(summary = "Get complete category tree")
+    public ResponseEntity<ApiResponse<List<CategoryTreeResponse>>> getCategoryTree() {
+        log.debug("Received request to get complete category tree");
+        
+        List<CategoryTreeResponse> categoryTree = categoryService.getCategoryTree();
+        ApiResponse<List<CategoryTreeResponse>> response = ApiResponse.success(
+            categoryTree,
+            "/api/categories/tree"
+        );
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/tree/gender/{gender}")
+    @Operation(summary = "Get category tree by gender")
+    public ResponseEntity<ApiResponse<List<CategoryTreeResponse>>> getCategoryTreeByGender(
+            @PathVariable CategoryGender gender) {
+        
+        log.debug("Received request to get category tree for gender: {}", gender);
+        
+        List<CategoryTreeResponse> categoryTree = categoryService.getCategoryTreeByGender(gender);
+        ApiResponse<List<CategoryTreeResponse>> response = ApiResponse.success(
+            categoryTree,
+            "/api/categories/tree/gender/" + gender
+        );
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/search")
+    @Operation(summary = "Search categories by query")
+    public ResponseEntity<ApiResponse<Page<CategoryResponse>>> searchCategories(
+            @RequestParam String q,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        
+        log.debug("Received search request with query: {}", q);
+        
+        Pageable pageable = PageRequest.of(page, size);
+        Page<CategoryResponse> categories = categoryService.searchCategories(q, pageable);
+        ApiResponse<Page<CategoryResponse>> response = ApiResponse.success(
+            categories,
+            "/api/categories/search?q=" + q
+        );
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/check-name")
+    @Operation(summary = "Check if category name exists for gender")
+    public ResponseEntity<ApiResponse<Boolean>> checkCategoryNameExists(
+            @RequestParam String name,
+            @RequestParam CategoryGender gender) {
+        
+        log.debug("Checking category name existence: {} for gender: {}", name, gender);
+        
+        boolean exists = categoryService.existsByNameAndGender(name, gender);
+        ApiResponse<Boolean> response = ApiResponse.success(
+            exists,
+            "Category name check completed",
+            "/api/categories/check-name"
+        );
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/check-slug")
+    @Operation(summary = "Check if category slug exists")
+    public ResponseEntity<ApiResponse<Boolean>> checkCategorySlugExists(@RequestParam String slug) {
+        log.debug("Checking category slug existence: {}", slug);
+        
+        boolean exists = categoryService.existsBySlug(slug);
+        ApiResponse<Boolean> response = ApiResponse.success(
+            exists,
+            "Category slug check completed",
+            "/api/categories/check-slug"
+        );
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/with-product-count")
+    @Operation(summary = "Get categories with product count")
+    public ResponseEntity<ApiResponse<List<CategoryResponse>>> getCategoriesWithProductCount() {
+        log.debug("Received request to get categories with product count");
+        
+        List<CategoryResponse> categories = categoryService.getCategoriesWithProductCount();
+        ApiResponse<List<CategoryResponse>> response = ApiResponse.success(
+            categories,
+            "/api/categories/with-product-count"
+        );
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/gender/{gender}/with-product-count")
+    @Operation(summary = "Get categories by gender with product count")
+    public ResponseEntity<ApiResponse<List<CategoryResponse>>> getCategoriesByGenderWithProductCount(
+            @PathVariable CategoryGender gender) {
+        
+        log.debug("Received request to get categories by gender with product count: {}", gender);
+        
+        List<CategoryResponse> categories = categoryService.getCategoriesByGenderWithProductCount(gender);
+        ApiResponse<List<CategoryResponse>> response = ApiResponse.success(
+            categories,
+            "/api/categories/gender/" + gender + "/with-product-count"
+        );
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/health")
+    @Operation(summary = "Health check endpoint")
+    public ResponseEntity<ApiResponse<String>> healthCheck() {
+        log.debug("Health check requested");
+        
+        ApiResponse<String> response = ApiResponse.success(
+            "Category Service is running smoothly",
+            "Category Service Health OK",
+            "/api/categories/health"
+        );
+        
+        return ResponseEntity.ok(response);
+    }
+}

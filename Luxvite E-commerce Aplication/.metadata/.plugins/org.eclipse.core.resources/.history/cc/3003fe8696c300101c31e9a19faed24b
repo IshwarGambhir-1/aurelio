@@ -1,0 +1,44 @@
+package com.yash.luxevite.categoryservice.dto;
+
+
+import java.time.LocalDateTime;
+
+import org.springframework.http.HttpStatus;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * Standard API response format for all endpoints
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ApiResponse<T> {
+
+    private boolean success;
+    private String message;
+    private T data;
+    private HttpStatus status;
+    private LocalDateTime timestamp;
+    private String path;
+
+    // Success response
+    public static <T> ApiResponse<T> success(T data, String message, String path) {
+        return new ApiResponse<>(true, message, data, HttpStatus.OK, LocalDateTime.now(), path);
+    }
+
+    public static <T> ApiResponse<T> success(T data, String path) {
+        return success(data, "Operation completed successfully", path);
+    }
+
+    public static <T> ApiResponse<T> created(T data, String message, String path) {
+        return new ApiResponse<>(true, message, data, HttpStatus.CREATED, LocalDateTime.now(), path);
+    }
+
+    // Error response
+    public static <T> ApiResponse<T> error(String message, HttpStatus status, String path) {
+        return new ApiResponse<>(false, message, null, status, LocalDateTime.now(), path);
+    }
+}

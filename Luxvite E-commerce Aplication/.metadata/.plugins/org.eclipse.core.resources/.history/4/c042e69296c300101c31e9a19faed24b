@@ -1,0 +1,9 @@
+package com.yash.luxevite.categoryservice.model;
+
+
+/**
+ * Enum for category status
+ */
+public enum CategoryStatus {
+    ACTIVE, INACTIVE, ARCHIVED
+}

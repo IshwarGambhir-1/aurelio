@@ -1,0 +1,129 @@
+package com.yash.luxevite.categoryservice.config;
+
+
+import java.util.Arrays;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import com.yash.luxevite.categoryservice.model.Category;
+import com.yash.luxevite.categoryservice.model.CategoryGender;
+import com.yash.luxevite.categoryservice.model.CategoryStatus;
+import com.yash.luxevite.categoryservice.repository.CategoryRepository;
+
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * Data initialization configuration
+ * Creates default categories in the database on application startup
+ */
+@Configuration
+@Slf4j
+public class DataInitializationConfig {
+
+    @Autowired
+    private CategoryRepository categoryRepository;
+
+    @Bean
+    public CommandLineRunner initData() {
+        return args -> {
+            // Create default categories if they don't exist
+            if (categoryRepository.count() == 0) {
+                createDefaultCategories();
+                log.info("Default categories initialized successfully");
+            } else {
+                log.info("Categories already exist, skipping initialization");
+            }
+        };
+    }
+
+    private void createDefaultCategories() {
+        // Men's Categories
+        Category menClothing = createCategory("Clothing", "Men's clothing collection", 
+                                            CategoryGender.MEN, "men-clothing", 1, true);
+        Category menShoes = createCategory("Shoes", "Men's shoes collection", 
+                                         CategoryGender.MEN, "men-shoes", 2, true);
+        Category menAccessories = createCategory("Accessories", "Men's accessories collection", 
+                                               CategoryGender.MEN, "men-accessories", 3, false);
+
+        // Women's Categories
+        Category womenClothing = createCategory("Clothing", "Women's clothing collection", 
+                                              CategoryGender.WOMEN, "women-clothing", 1, true);
+        Category womenShoes = createCategory("Shoes", "Women's shoes collection", 
+                                           CategoryGender.WOMEN, "women-shoes", 2, true);
+        Category womenAccessories = createCategory("Accessories", "Women's accessories collection", 
+                                                 CategoryGender.WOMEN, "women-accessories", 3, false);
+
+        // Children's Categories
+        Category kidsClothing = createCategory("Clothing", "Children's clothing collection", 
+                                             CategoryGender.CHILDREN, "kids-clothing", 1, true);
+        Category kidsShoes = createCategory("Shoes", "Children's shoes collection", 
+                                          CategoryGender.CHILDREN, "kids-shoes", 2, true);
+        Category kidsAccessories = createCategory("Accessories", "Children's accessories collection", 
+                                                CategoryGender.CHILDREN, "kids-accessories", 3, false);
+
+        // Save root categories
+        List<Category> rootCategories = Arrays.asList(
+            menClothing, menShoes, menAccessories,
+            womenClothing, womenShoes, womenAccessories,
+            kidsClothing, kidsShoes, kidsAccessories
+        );
+        
+        categoryRepository.saveAll(rootCategories);
+
+        // Create subcategories for Men's Clothing
+        Category menTshirts = createSubCategory("T-Shirts", "Men's t-shirts", menClothing, "men-tshirts", 1);
+        Category menShirts = createSubCategory("Shirts", "Men's shirts", menClothing, "men-shirts", 2);
+        Category menJeans = createSubCategory("Jeans", "Men's jeans", menClothing, "men-jeans", 3);
+        Category menJackets = createSubCategory("Jackets", "Men's jackets", menClothing, "men-jackets", 4);
+
+        // Create subcategories for Women's Clothing
+        Category womenDresses = createSubCategory("Dresses", "Women's dresses", womenClothing, "women-dresses", 1);
+        Category womenTops = createSubCategory("Tops", "Women's tops", womenClothing, "women-tops", 2);
+        Category womenSkirts = createSubCategory("Skirts", "Women's skirts", womenClothing, "women-skirts", 3);
+        Category womenJeans = createSubCategory("Jeans", "Women's jeans", womenClothing, "women-jeans", 4);
+
+        // Create subcategories for Children's Clothing
+        Category kidsBoys = createSubCategory("Boys", "Clothing for boys", kidsClothing, "kids-boys", 1);
+        Category kidsGirls = createSubCategory("Girls", "Clothing for girls", kidsClothing, "kids-girls", 2);
+        Category kidsBabies = createSubCategory("Babies", "Clothing for babies", kidsClothing, "kids-babies", 3);
+
+        // Save subcategories
+        List<Category> subCategories = Arrays.asList(
+            menTshirts, menShirts, menJeans, menJackets,
+            womenDresses, womenTops, womenSkirts, womenJeans,
+            kidsBoys, kidsGirls, kidsBabies
+        );
+        
+        categoryRepository.saveAll(subCategories);
+    }
+
+    private Category createCategory(String name, String description, CategoryGender gender, 
+                                  String slug, int displayOrder, boolean featured) {
+        Category category = new Category();
+        category.setName(name);
+        category.setDescription(description);
+        category.setGender(gender);
+        category.setSlug(slug);
+        category.setDisplayOrder(displayOrder);
+        category.setIsFeatured(featured);
+        category.setStatus(CategoryStatus.ACTIVE);
+        return category;
+    }
+
+    private Category createSubCategory(String name, String description, Category parent, 
+                                     String slug, int displayOrder) {
+        Category subCategory = new Category();
+        subCategory.setName(name);
+        subCategory.setDescription(description);
+        subCategory.setGender(parent.getGender());
+        subCategory.setSlug(slug);
+        subCategory.setDisplayOrder(displayOrder);
+        subCategory.setParentCategory(parent);
+        subCategory.setStatus(CategoryStatus.ACTIVE);
+        return subCategory;
+    }
+}
