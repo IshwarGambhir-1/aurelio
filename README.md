@@ -1,2 +1,2 @@
-# luxe-vita
-E-commerce Full stack web application for Luxe Vita premium clothing brand.
+# aurelio
+E-commerce Full stack web application for Aurelio premium clothing brand.
